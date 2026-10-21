@@ -5,6 +5,9 @@ import Prelude hiding ((<>))
 import Test.QuickCheck
 import SimpleJSON
 import Prettify
+import PrettyJSON
+import Data.Char (ord)
+import Numeric (showHex)
 
 -- Gerador de valores JSON aleatorios
 instance Arbitrary JValue where
@@ -86,6 +89,56 @@ prop_getObjectJValue valor =
     getObject (JObject [("chave", valor)])
         == Just [("chave", valor)]
 
+-- Teste 10: escapar aspas em strings
+prop_escapeAspas :: Bool
+prop_escapeAspas =
+    pretty 80 (renderJValue (JString "Ola \"Maria\""))
+        == "\"Ola \\\"Maria\\\"\""
+
+-- Teste 11: escapar quebra de linha
+prop_escapeNovaLinha :: Bool
+prop_escapeNovaLinha =
+    pretty 80 (renderJValue (JString "Ola\nMundo"))
+        == "\"Ola\\nMundo\""
+
+-- Teste 12: preservar caracteres Unicode comuns
+prop_unicode :: Bool
+prop_unicode =
+    pretty 80 (renderJValue (JString "ação"))
+        == "\"ação\""
+
+-- Teste 13: objetos e arrays vazios
+prop_vazios :: Bool
+prop_vazios =
+    pretty 80 (renderJValue (JArray [])) == "[]"
+    &&
+    pretty 80 (renderJValue (JObject [])) == "{}"
+
+-- Teste 14: array aninhado com indentacao
+prop_arrayAninhado :: Bool
+prop_arrayAninhado =
+    let valor = JArray [JArray [JBool True]]
+        resultado = pretty 80 (renderJValue valor)
+    in resultado ==
+        "[\n    [\n        true\n    ]\n]"
+
+-- Teste 15: objetos com caracteres especiais nas chaves
+prop_chaveEspecial :: Bool
+prop_chaveEspecial =
+    let valor = JObject [("nome\"com aspas", JNull)]
+        resultado = pretty 80 (renderJValue valor)
+    in resultado ==
+        "{\n    \"nome\\\"com aspas\": null\n}"
+
+-- Teste 16: caracteres de controle em JSON
+prop_controle :: Bool
+prop_controle =
+    let c = '\x0001'
+        resultado = pretty 80 (renderJValue (JString [c]))
+        h = showHex (ord c) ""
+        esperado = "\"\\u" ++ replicate (4 - length h) '0' ++ h ++ "\""
+    in resultado == esperado
+
 -- Executa os testes automatizados
 main :: IO ()
 main = do
@@ -98,3 +151,10 @@ main = do
     quickCheck prop_concat
     quickCheck prop_getArrayJValue
     quickCheck prop_getObjectJValue
+    quickCheck prop_escapeAspas
+    quickCheck prop_escapeNovaLinha
+    quickCheck prop_unicode
+    quickCheck prop_vazios
+    quickCheck prop_arrayAninhado
+    quickCheck prop_chaveEspecial
+    quickCheck prop_controle
