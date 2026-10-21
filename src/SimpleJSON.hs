@@ -20,18 +20,21 @@ data JValue
     | JArray [JValue]
     deriving (Eq, Show)
 
-
 -- Acessa um valor do tipo String
 getString :: JValue -> Maybe String
 getString (JString s) = Just s
 getString _ = Nothing
 
--- Acessa um valor inteiro
+-- Acessa um numero inteiro com verificacao de limites
 getInt :: JValue -> Maybe Int
 getInt (JNumber n)
-    | isInfinite n || isNaN n = Nothing
-    | n == fromInteger (round n) = Just (round n)
-    | otherwise = Nothing
+    | isNaN n || isInfinite n = Nothing
+    | n /= fromInteger inteiro = Nothing
+    | inteiro < toInteger (minBound :: Int) = Nothing
+    | inteiro > toInteger (maxBound :: Int) = Nothing
+    | otherwise = Just (fromInteger inteiro)
+  where
+    inteiro = round n :: Integer
 getInt _ = Nothing
 
 -- Acessa um numero decimal
