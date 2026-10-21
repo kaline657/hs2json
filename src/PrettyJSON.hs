@@ -6,6 +6,8 @@ module PrettyJSON
 import SimpleJSON
 import Prettify
 import Prelude hiding ((<>))
+import Data.Char (ord)
+import Numeric (showHex)
 
 -- Converte um valor JSON em um documento
 renderJValue :: JValue -> Doc
@@ -21,7 +23,7 @@ renderJValue JNull = text "null"
 renderJValue (JNumber n) = double n
 
 -- Representa uma string
-renderJValue (JString s) = text (show s)
+renderJValue (JString s) = string s
 
 -- Representa um array JSON
 renderJValue (JArray a) =
@@ -32,9 +34,33 @@ renderJValue (JObject o) =
     series '{' '}' field o
   where
     field (name, value) =
-        text (show name) <> text ": " <> renderJValue value
+        string name <> text ": " <> renderJValue value
 
+-- Converte uma string em documento JSON
+string :: String -> Doc
+string s = char '"' <> hcat (map oneChar s) <> char '"'
 
+-- Trata caracteres especiais
+oneChar :: Char -> Doc
+oneChar c =
+    case c of
+        '"'  -> text "\\\""
+        '\\' -> text "\\\\"
+        '\b' -> text "\\b"
+        '\f' -> text "\\f"
+        '\n' -> text "\\n"
+        '\r' -> text "\\r"
+        '\t' -> text "\\t"
+        _
+            | ord c < 0x20 -> hexEscape c
+            | otherwise -> char c
+
+-- Representa caracteres de controle
+hexEscape :: Char -> Doc
+hexEscape c =
+    text "\\u" <> text (replicate (4 - length h) '0' ++ h)
+  where
+    h = showHex (ord c) ""
 
 -- Organiza os elementos de arrays e objetos JSON
 series :: Char -> Char -> (a -> Doc) -> [a] -> Doc
