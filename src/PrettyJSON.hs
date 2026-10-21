@@ -12,7 +12,7 @@ import Numeric (showHex)
 -- Converte um valor JSON em um documento
 renderJValue :: JValue -> Doc
 
--- Representa um valor booleano
+-- Representa valores booleanos
 renderJValue (JBool True) = text "true"
 renderJValue (JBool False) = text "false"
 
@@ -62,12 +62,16 @@ hexEscape c =
   where
     h = showHex (ord c) ""
 
--- Organiza os elementos de arrays e objetos JSON
+-- Organiza arrays e objetos com indentacao
 series :: Char -> Char -> (a -> Doc) -> [a] -> Doc
 series open close item values =
-    char open <> elements <> char close
+    case values of
+        [] -> char open <> char close
+        _  ->
+            char open
+            <> nest 4 (line <> elementos)
+            <> line
+            <> char close
   where
-    elements =
-        case values of
-            [] -> empty
-            _  -> line <> fsep (punctuate (char ',') (map item values)) <> line
+    elementos =
+        fsep (punctuate (char ',') (map item values))
