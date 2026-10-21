@@ -1,0 +1,17 @@
+# Arquivos gerados pelo Cabal
+dist-newstyle/
+dist/
+.cabal-sandbox/
+cabal.sandbox.config
+
+# Arquivos compilados
+*.hi
+*.o
+*.dyn_hi
+*.dyn_o
+*.exe
+
+# Arquivos temporarios
+*.log
+*.tmp
+*~
