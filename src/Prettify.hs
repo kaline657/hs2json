@@ -73,8 +73,11 @@ flatten (Union x _) = flatten x
 flatten other = other
 
 -- Junta documentos usando espacos ou quebras de linha
+
 fsep :: [Doc] -> Doc
-fsep = foldr (</>) empty
+fsep [] = empty
+fsep [x] = x
+fsep (x:xs) = x </> fsep xs
 
 -- Combina documentos com possibilidade de quebra de linha
 (</>) :: Doc -> Doc -> Doc
